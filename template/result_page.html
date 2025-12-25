@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[The 999th regression of Garbage]</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Charm:wght@400;700&family=Shadows+Into+Light&family=Taviraj:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0; 
+            text-align: center;
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+
+            font-family: "Shadows Into Light", cursive;
+            font-weight: 800;
+            font-style: normal;
+            font-size: 2vw;
+
+        }
+
+        .meme_img {
+            width: 90vw;
+            text-align: center;
+        }
+
+        .result_img {
+            height: 10vw;
+            text-align: center;
+        }
+        
+        .thanks_txt {
+            font-family: "Charm", cursive;
+            font-weight: 800;
+            font-style: normal;
+            font-size: 3vw;
+        }
+
+        .describe_txt {
+            font-family: "Taviraj", serif;
+            font-weight: 400;
+            font-style: normal;
+            font-size: 1.5vw;
+            text-indent: 2em; 
+            text-align: left;  
+            word-wrap: break-word;  
+            max-width: 62%;  
+            margin: 0 auto;  
+        }
+
+        .describe_txt1 {
+            font-family: "Taviraj", serif;
+            font-weight: 400;
+            font-style: normal;
+            font-size: 1.5vw;
+            text-indent: 2em;  
+            text-align: left;  
+            word-wrap: break-word;  
+            max-width: 80%; 
+            margin: 0 auto;
+        }
+
+        .plots {
+            display: flex;
+            flex-wrap: wrap; 
+            justify-content: space-around; 
+            margin-top: 20px;
+        }
+
+        .plot {
+            margin: 15px;
+            text-align: center;
+        }
+
+        .regress_xy_plots {
+            display: flex;
+            flex-wrap: nowrap; 
+            justify-content: space-between; 
+            overflow-x: auto;  
+            margin-top: 20px;
+        }
+
+        .regress_xy_plot {
+            flex: 0 0 auto;  
+            margin: 15px;
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+    <h1 style="font-size: 5vw;">[The 999th regression of Garbage]</h1>
+    <img src="{{ result_img }}" class="result_img">
+    {% if predicted_img_class != predicted_img_class_2 %}
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="result_img" value="{{ result_img }}">
+            <input type="hidden" name="predicted_img_class" value="{{ predicted_img_class }}">
+            <input type="hidden" name="predicted_img_class_2" value="{{ predicted_img_class_2 }}">
+            <input type="hidden" name="similarity" value="{{ similarity }}">
+            <input type="hidden" name="similarity_2" value="{{ similarity_2 }}">
+            <button type="submit">Wanna try another result?</button>
+        </form>
+    {% endif %}
+    <p style="font-size: 2vw;">Your image is detected as {{ predicted_img_class }}</p>
+    <p style="font-size: 2vw;">Accuracy of detection is {{ similarity }} %</p>
+
+    <h2 style="font-size: 3vw; background-color:aliceblue;">Here is Your Result</h2>
+    <p style="font-size: 4vw;">Predicted Price of {{ predicted_img_class }} is {{ predict_price }} baht</p>
+    <h2 style="background-color:aliceblue;">Regression Plot of {{ predicted_img_class }}</h2>
+    <div class="plots">
+        <div class="plot">
+            <img src="{{ regression_x_img }}" alt="Regression X Plot" style="width: 90vw">
+            <p class="describe_txt1">{{ regression_x_drcrp[0] }}</p>
+            <p class="describe_txt" style="text-align:center; font-size: 2vw;">{{ regression_x_drcrp[1] }}</p>
+        </div>
+    </div>
+
+    <h2 style="background-color:aliceblue;">Time Series Plot</h2>
+    <div class="plots">
+        <div class="plot">
+            <img src="{{ time_series_img }}" alt="Time Series Plot" style="width: 90vw">
+            <p class="describe_txt1">เมื่อนำข้อมูลของ Steel, Glass, Paper และ Plastic ในช่วงวันที่ 29 ธันวาคม 2564 - วันที่ 1 ตุลาคม 2567 มาสร้างเป็นกราฟ แสดงให้เห็นถึงแนวโน้มคร่าว ๆ ของข้อมูลในแต่ละประเภท</p>
+        </div>
+    </div>
+
+    <h2 style="background-color:aliceblue;">Regression and Correlation Plots between {{ predicted_img_class }} and {{ regression_y_name[0] }}, {{ regression_y_name[1] }}, {{ regression_y_name[2] }}</h2>
+    <img src="{{ corr_matrix_img }}" alt="Correlation Plot" style="width: 40vw;">
+    <p>Correlation Plot between {{ predicted_img_class }} and {{ regression_y_name[0] }}, {{ regression_y_name[1] }}, {{ regression_y_name[2] }}</p>
+    <div class="regress_xy_plots">
+        {% for regression_xy in regression_xy_lst %}
+            <div class="regress_xy_plot">
+                <img src="{{ regression_xy }}" alt="Regression XY Plot {{ loop.index }}" style="width: 20vw;">
+                <p>Regression Plot of {{ predicted_img_class }} and {{ regression_y_name[loop.index - 1] }}</p>
+                <p class="describe_txt">{{ regression_xy_dscrp[loop.index - 1] }}</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <p class="thanks_txt">ขอขอบคุณข้อมูลจาก  <a href="https://wongpanit.com/" style="text-decoration: none; color: inherit; font-style: normal;">wongpanit.com</a></p>
+
+    <p><a href="/" style="text-decoration: none; color: inherit; font-style: normal;">Return to main page</a></p>
+    <img src="/image/garbage_keeper.png" style="width: 70vw;">
+    <div style="height: 10vh;"></div>
+</body>
+</html>

@@ -1,0 +1,17 @@
+fastapi
+uvicorn[standard]
+
+jinja2
+python-multipart
+
+numpy
+pandas
+scipy
+
+opencv-python
+matplotlib
+seaborn
+
+scikit-learn
+
+tensorflow
