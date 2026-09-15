@@ -30,12 +30,12 @@ The application is built with **FastAPI** and provides results through a web int
 
 ## 🚀 How to Run This Project
 
-**1.Install dependencies**
+**1. Install dependencies**
 ```bash
 pip install -r requirements.txt
 ```
-**2️. Run the application**
-``` bash
+**2. Run the application**
+```bash
 python -m uvicorn main:app
 ```
 

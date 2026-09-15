@@ -1,3 +1,4 @@
+import base64
 import uvicorn
 import shutil
 import os
@@ -8,7 +9,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 from fastapi import FastAPI, UploadFile, File, responses, templating, staticfiles, Request
-from tensorflow.keras.models import load_model
 from sklearn import metrics, linear_model, preprocessing
 from scipy import spatial
 
@@ -22,8 +22,8 @@ app.mount("/image", staticfiles.StaticFiles(directory="image"), name="image")
 app.mount("/plots", staticfiles.StaticFiles(directory="plots"), name="plots")
 
 def detect_img(img, trash_type_lst):
-    model_1 = load_model(os.path.join('model','trash_classifier_1.h5'))
-    model_2 = load_model(os.path.join('model','trash_classifier_2.h5'))
+    model_1 = tf.keras.models.load_model(os.path.join('model', 'trash_classifier_1.h5'))
+    model_2 = tf.keras.models.load_model(os.path.join('model', 'trash_classifier_2.h5'))
     
     plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     resize = tf.image.resize(img, (256,256))
@@ -74,33 +74,43 @@ def find_best_degree(X, y, max_degree=5):
         mse = metrics.mean_squared_error(y, y_pred)
         mse_values.append(mse)
 
-    best_degree = np.argmin(mse_values) + 1
+    best_degree = int(np.argmin(mse_values)) + 1
     return best_degree
 
 @app.get("/", response_class=responses.HTMLResponse)
 async def get_image(request: Request):
-    return templates.TemplateResponse("main_page.html", {"request": request})
+    return templates.TemplateResponse(
+        request=request,
+        name="main_page.html",
+        context={"request": request},
+    )
 
 @app.post("/upload", response_class=responses.HTMLResponse)
 async def show_result(request: Request, image: UploadFile = File(None)):
     
     trash_type = ['Glass', 'Steel', 'Paper', 'Plastic']
     
-    if image:   
-        file_location = os.path.join("image", image.filename)
+    if image and image.filename:
+        file_location = os.path.join("image", os.path.basename(image.filename))
         with open(file_location, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
-        
-        img = cv2.imread(file_location)   
-        img_result = detect_img(img, trash_type)     
-        predicted_img_class = img_result["predicted_img_class"]
-        similarity = img_result["similarity"]
-        predicted_img_class_2 = img_result["predicted_img_class_2"]
-        similarity_2 = img_result["similarity_2"]
+
+        with open(file_location, "rb") as uploaded_file:
+            encoded_image = base64.b64encode(uploaded_file.read()).decode("ascii")
+        result_img = f"data:{image.content_type or 'application/octet-stream'};base64,{encoded_image}"
+
+        try:
+            img = cv2.imread(file_location)
+            img_result = detect_img(img, trash_type)
+            predicted_img_class = img_result["predicted_img_class"]
+            similarity = img_result["similarity"]
+            predicted_img_class_2 = img_result["predicted_img_class_2"]
+            similarity_2 = img_result["similarity_2"]
+        finally:
+            os.remove(file_location)
     else: 
         form_data = await request.form()
-        file_location = form_data.get('result_img')
-        img = cv2.imread(file_location)
+        result_img = form_data.get('result_img')
         predicted_img_class = form_data.get('predicted_img_class_2')
         predicted_img_class_2 = form_data.get('predicted_img_class')
         similarity = form_data.get('similarity_2')
@@ -119,6 +129,9 @@ async def show_result(request: Request, image: UploadFile = File(None)):
 
     dates = df.index.tolist()
     data_array = np.array([data["Steel"], data["Paper"], data["Glass"], data["Plastic"]])
+
+    if not isinstance(predicted_img_class, str) or predicted_img_class not in data:
+        raise ValueError("Invalid predicted trash type")
     x_axis = predicted_img_class
     
     #-----------------------------------------------------------------------------------------------------------------------
@@ -290,22 +303,26 @@ async def show_result(request: Request, image: UploadFile = File(None)):
     #-----------------------------------------------------------------------------------------------------------------------
     #-----------------------------------------------------------------------------------------------------------------------
         
-    return templates.TemplateResponse("result_page.html", {
-        "request": request, 
-        "result_img": file_location, 
-        "predicted_img_class": predicted_img_class, 
-        "similarity": similarity,
-        "predicted_img_class_2": predicted_img_class_2, 
-        "similarity_2": similarity_2,
-        "corr_matrix_img": corr_matrix_img_path,
-        "time_series_img": time_series_img_path,
-        "regression_x_img": regression_x_img_path,
-        "regression_x_drcrp": regression_x_drcrp,
-        "regression_xy_lst": regression_xy_img_path,
-        "regression_xy_dscrp": descript_show,
-        "regression_y_name": regression_y_name,
-        "predict_price": predicted_price_2 
-        })
+    return templates.TemplateResponse(
+        request=request,
+        name="result_page.html",
+        context={
+            "request": request,
+            "result_img": result_img,
+            "predicted_img_class": predicted_img_class,
+            "similarity": similarity,
+            "predicted_img_class_2": predicted_img_class_2,
+            "similarity_2": similarity_2,
+            "corr_matrix_img": corr_matrix_img_path,
+            "time_series_img": time_series_img_path,
+            "regression_x_img": regression_x_img_path,
+            "regression_x_drcrp": regression_x_drcrp,
+            "regression_xy_lst": regression_xy_img_path,
+            "regression_xy_dscrp": descript_show,
+            "regression_y_name": regression_y_name,
+            "predict_price": predicted_price_2,
+        },
+    )
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, log_level="info")
